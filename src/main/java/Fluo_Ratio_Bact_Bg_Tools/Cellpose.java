@@ -1,4 +1,4 @@
-package Emma_BacteriaOmni_Tools.Cellpose;
+package Fluo_Ratio_Bact_Bg_Tools;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import static java.io.File.separatorChar;
 
 import ij.IJ;
-import Emma_BacteriaOmni_Tools.Cellpose.CellposeTaskSettings;
+import Fluo_Ratio_Bact_Bg_Tools.CellposeTaskSettings;
 
 
 public class Cellpose {

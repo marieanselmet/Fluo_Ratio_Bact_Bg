@@ -1,6 +1,6 @@
-package Emma_BacteriaOmni_Tools.Cellpose;
+package Fluo_Ratio_Bact_Bg_Tools;
 
-import Emma_BacteriaOmni_Tools.Cellpose.CellposeTaskSettings;
+import Fluo_Ratio_Bact_Bg_Tools.CellposeTaskSettings;
 import java.util.ArrayList;
 
 public class CellposeTask {

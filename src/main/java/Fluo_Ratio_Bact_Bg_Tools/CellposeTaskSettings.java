@@ -1,4 +1,4 @@
-package Emma_BacteriaOmni_Tools.Cellpose;
+package Fluo_Ratio_Bact_Bg_Tools;
 
 
 public class CellposeTaskSettings {

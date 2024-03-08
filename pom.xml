@@ -6,24 +6,24 @@
         <modelVersion>4.0.0</modelVersion>
 
         
-	<groupId>cirb</groupId>
-	<artifactId>FluoBackgroundBacteria</artifactId>
+	<groupId>SAMe</groupId>
+	<artifactId>Fluo_Ratio_Bact_Bg</artifactId>
 	<version>1.0.0</version>
         <packaging>jar</packaging>
-	<name>FluoBackgroundBacteria</name>
+	<name>Fluo_Ratio_Bact_Bg</name>
 	<description>
-            Find DNA in bacteria
+            Segment bacteria with Omnipose and measure their fluorescence as well as the background fluorescence
         </description>
 
 	<developers>
 		<developer>
-                    <id>phm</id>
-                    <name>Philippe Mailly</name>
-                    <email>philippe.mailly@college-de-france.fr</email>
+                    <id></id>
+                    <name></name>
+                    <email></email>
                     <url></url>
-                    <organization>CIRB, Collège de France</organization>
+                    <organization></organization>
                     <roles>
-                            <role>developer</role>
+                            <role></role>
                     </roles>
                     <timezone>-1</timezone>
 		</developer>
@@ -33,7 +33,7 @@
 	<properties>
                 <imagej.app.directory>C:\Users\manselme\Desktop\Fiji.app\</imagej.app.directory>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<main-class>Dna_Bacteria_Omni.jar</main-class>
+		<main-class>Fluo_Ratio_Bact_Bg.jar</main-class>
 	</properties>
 
 	<dependencies>

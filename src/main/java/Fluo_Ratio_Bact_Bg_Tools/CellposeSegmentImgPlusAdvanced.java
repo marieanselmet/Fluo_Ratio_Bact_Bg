@@ -1,6 +1,6 @@
-package Emma_BacteriaOmni_Tools.Cellpose;
+package Fluo_Ratio_Bact_Bg_Tools;
 
-import Emma_BacteriaOmni_Tools.Cellpose.CellposeTask;
+import Fluo_Ratio_Bact_Bg_Tools.CellposeTask;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;

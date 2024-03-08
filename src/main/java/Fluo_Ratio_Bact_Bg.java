@@ -1,4 +1,4 @@
-import Emma_BacteriaOmni_Tools.Tools;
+import Fluo_Ratio_Bact_Bg.Tools;
 import ij.*;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
@@ -25,17 +25,13 @@ import org.apache.commons.io.FilenameUtils;
 import org.scijava.util.ArrayUtils;
 
 
-/**
- * Detect bacteria in channel 3 and compute intensity in channel 2
- * @author Orion-CIRB
- */
-public class Emma_Bacteria implements PlugIn {
+public class Fluo_Ratio_Bact_Bg implements PlugIn {
     
     Tools tools = new Tools();
     private String imageDir = "";
     public String outDirResults = "";
-    public BufferedWriter results;
-        public BufferedWriter meanResults;
+    public BufferedWriter fluoResults;
+    public BufferedWriter shapeResults;
    
     
     public void run(String arg) {
@@ -44,7 +40,7 @@ public class Emma_Bacteria implements PlugIn {
                 return;
             } 
             
-            imageDir = IJ.getDirectory("Choose directory containing image files...");
+            imageDir = IJ.getDirectory("Choose directory containing image files");
             if (imageDir == null) {
                 return;
             }  
@@ -53,7 +49,7 @@ public class Emma_Bacteria implements PlugIn {
             String file_ext = tools.findImageType(new File(imageDir));
             ArrayList<String> imageFiles = tools.findImages(imageDir, file_ext);
             if (imageFiles.isEmpty()) {
-                IJ.showMessage("Error", "No images found with " + file_ext + " extension");
+                IJ.showMessage("Error", "No images found");
                 return;
             }
             
@@ -66,22 +62,19 @@ public class Emma_Bacteria implements PlugIn {
             // Write header in results file
             String header = "Image name\tFrame number\t Bacterium ID\tBacterium surface (µm2)\tBacterium length (µm)\tBacterium intensity"
                     +"\tBackground intensity \tBacterium intensity / Background intensity\n";
-            FileWriter fwResults = new FileWriter(outDirResults + "results.xls", false);
-            results = new BufferedWriter(fwResults);
-            results.write(header);
-            results.flush();
+            FileWriter fwFluoResults = new FileWriter(outDirResults + "fluo_results.xls", false);
+            fluoResults = new BufferedWriter(fwFluoResults);
+            fluoResults.write(header);
+            fluoResults.flush();
                     
-            // Write header for agglomerated results
-            header = "Image name\tFrame number\tMean bacterium area\tBacterium area std\t"
-                    + "Mean bacterium feret\tBacterium feret std\t"
-                    + "Mean bacterium feretMin\tBacterium feretMin std\t"
-                    + "Mean bacterium circularity\tBacterium circularity std\t"
-                    + "Mean bacterium aspect ratio\tBacterium aspect ratio std\t"
-                    + "Mean bacterium roundness\tBacterium roundness std\n";
-            FileWriter fwMeanResults = new FileWriter(outDirResults + "mean_results.xls", false);
-            meanResults = new BufferedWriter(fwMeanResults);
-            meanResults.write(header);
-            meanResults.flush();
+            header = "Image name\tFrame number\tBact ID\t Bacterium area\tBacterium feret\t"
+                    + "Bacterium feret min\tBacterium cicularity\t"
+                    + "Bacterium aspect ratio\t"+ "Bacterium roundness\n";
+            
+            FileWriter fwShapeResults = new FileWriter(outDirResults + "shape_results.xls", false);
+            shapeResults = new BufferedWriter(fwShapeResults);
+            shapeResults.write(header);
+            shapeResults.flush();
             
             // Create OME-XML metadata store of the latest schema version
             ServiceFactory factory;
@@ -108,7 +101,7 @@ public class Emma_Bacteria implements PlugIn {
             for (String f : imageFiles) {
                 reader.setId(f);
                 String rootName = FilenameUtils.getBaseName(f);
-                tools.print("--- ANALYZING IMAGE " + rootName + " ------");
+                tools.print("-- ANALYZING IMAGE " + rootName + " --");
                 
                 ImporterOptions options = new ImporterOptions();
                 options.setId(f);
@@ -117,37 +110,33 @@ public class Emma_Bacteria implements PlugIn {
                 options.setSplitChannels(true);
                 
                 
-                // Open bacteria channel
+                // Open phase contrast channel
                 int indexCh = ArrayUtils.indexOf(channels, chs[0]);
-                System.out.println("- Opening bacteria channel " + chs[0] + " -");
                 ImagePlus imgPhase = BF.openImagePlus(options)[indexCh];
                 
-                // Open foci1 channel 1
+                // Open fluo channel
                 indexCh = ArrayUtils.indexOf(channels, chs[1]);
-                System.out.println("- Opening foci1 channel " + chs[1] + " -");
                 ImagePlus imgFluo = BF.openImagePlus(options)[indexCh];
                 
                 for(int t=1; t < imgPhase.getNFrames() + 1; t++) {
                     
                     // Open frame t for channel 0
                     ImagePlus tPhase = new Duplicator().run​(imgPhase, 1, 1, 1, 1, t, t);
-                    
                     // Detect bacteria with Omnipose
                     tools.print("- Detecting bacteria on phase contrast channel -");
                     Objects3DIntPopulation tbactPop = tools.omniposeDetection(tPhase);
-                    System.out.println(tbactPop.getNbObjects() + " bacteria found");
+                    System.out.println(tbactPop.getNbObjects() + " bacteria found on frame " + t);
                     
                     // Open frame t for channel 1
                     ImagePlus tFluo = new Duplicator().run​(imgFluo, 1, 1, 1, 1, t, t);
-//                    double tBackground = tools.findRoiBackgroundAuto(tFluo, 50, "median");
-                    double tBackground = tools.findRoiBackgroundAuto(tFluo, 100, "median");
+                    double tBackground = tools.findRoiBackgroundAuto(tFluo, 100, "median"); // rolling ball radius of 100 pixels
                         
                     // Do measurements and save results
                     tools.print("- Saving results -");
-                    tools.saveResults(tbactPop, tPhase, tFluo, tBackground, rootName, results, meanResults, t);
+                    tools.saveResults(tbactPop, tPhase, tFluo, tBackground, rootName, fluoResults, shapeResults, t);
                 
                     // Save images
-                    tools.drawResults(tPhase, tFluo, tbactPop, outDirResults+rootName, outDirResults);
+                    tools.drawResults(tPhase, tFluo, tbactPop, outDirResults+rootName, outDirResults, t);
 
                 }
  
@@ -155,10 +144,10 @@ public class Emma_Bacteria implements PlugIn {
                 tools.flush_close(imgFluo); 
             }
 
-            tools.print("--- All done! ---");
+            tools.print("--Done !--");
             
         }   catch (IOException | FormatException | DependencyException | ServiceException ex) {
-            Logger.getLogger(Emma_Bacteria.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fluo_Ratio_Bact_Bg.class.getName()).log(Level.SEVERE, null, ex);
         }  
     }
 }    
