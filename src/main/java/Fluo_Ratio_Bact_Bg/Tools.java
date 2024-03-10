@@ -10,7 +10,6 @@ import ij.gui.Roi;
 import fiji.util.gui.GenericDialogPlus;
 import ij.measure.ResultsTable;
 import ij.plugin.RGBStackMerge;
-import ij.plugin.ZProjector;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.process.ImageProcessor;
 import java.awt.Color;
@@ -44,7 +43,7 @@ public class Tools {
     private double pixelSurf = 0;
     String[] channelsName = {"Phase: ", "Fluo: "};
     
-     // Omnipose
+     // Omnipose settings
     private String omniposeEnvDirPath = "/opt/AppData/Local/miniconda3/envs/omnipose";
     private String omniposeModelsPath = System.getProperty("user.home")+"/.cellpose/models/";
     private String omniposeModel = "bact_phase_omnitorch_0";
@@ -53,15 +52,9 @@ public class Tools {
     private int omniposeMaskThreshold = 0;
     private double omniposeFlowThreshold = 0.4;
     private boolean useGpu = true;
-    
-    // Bacteria
+     
     private double minBactSurface = 1;
     private double maxBactSurface = 10;
-   
-    public void print(String log) {
-        System.out.println(log);
-        IJ.showStatus(log);
-    }
     
     
     public boolean checkInstalledModules() {
@@ -69,7 +62,7 @@ public class Tools {
         try {
             loader.loadClass("mcib3d.geom.Object3D");
         } catch (ClassNotFoundException e) {
-            IJ.showMessage("Error", "3D ImageJ Suite not installed, please install from update site");
+            IJ.showMessage("Error", "3D ImageJ Suite not installed");
             return false;
         }
         return true;
@@ -211,7 +204,7 @@ public class Tools {
         int index = 0;
         for (String ch : channelsName) {
             gd.addChoice(ch, channels, channels[index]);
-            index++;
+            index++;    
         }
         
         gd.addMessage("Bacteria detection", Font.getFont("Monospace"), Color.blue);
@@ -308,46 +301,42 @@ public class Tools {
         for (int x = 0; x < img.getWidth() - roiBgSize; x += roiBgSize) {
             for (int y = 0; y < img.getHeight() - roiBgSize; y += roiBgSize) {
                 Roi roi = new Roi(x, y, roiBgSize, roiBgSize);
-
                 double bg = findBackground(img, roi, method);
                 intBgFound.add(new RoiBg(roi, bg));
             }
         }
         img.deleteRoi();
-        // sort RoiBg on bg value
+        
+        // Sort RoiBg on bg value ascending order
         intBgFound.sort(Comparator.comparing(RoiBg::getBgInt));
-        // Find lower value
+        // Return min value
         RoiBg roiBg = intBgFound.get(0);
-        
-        
-        int roiCenterX = (int)(roiBg.getRoi().getBounds().x+(roiBgSize/2));
-        int roiCenterY = (int)(roiBg.getRoi().getBounds().y+(roiBgSize/2));
-        System.out.println("Roi auto background("+method+") found = "+roiBg.getBgInt()+" center x = "+roiCenterX+", y = "+roiCenterY);
         return roiBg.getBgInt();
     }
     
     
    
     public void saveResults(Objects3DIntPopulation bactPop, ImagePlus phaseImg, ImagePlus fluoImg, double background, String imgName, BufferedWriter fluoFile, BufferedWriter shapeFile, int frameNumber) throws IOException {
-        
         for (Object3DInt bact : bactPop.getObjects3DInt()) {
             float bactLabel = bact.getLabel();
             double bactSurf = new MeasureVolume(bact).getValueMeasurement(MeasureVolume.VOLUME_UNIT);
             VoxelInt feret1Unit = new MeasureFeret(bact).getFeret1Unit();
             VoxelInt feret2Unit = new MeasureFeret(bact).getFeret2Unit();
             double bactLength = feret1Unit.distance(feret2Unit)*cal.pixelWidth;
+            
+            // Fluo descriptors
             double fluoIntensity = new MeasureIntensity(bact, ImageHandler.wrap(fluoImg)).getValueMeasurement(MeasureIntensity.INTENSITY_AVG);
-           
             fluoFile.write(imgName+"\t"+frameNumber+"\t"+bactLabel+"\t"+bactSurf+"\t"+bactLength+"\t"+fluoIntensity+"\t"+background+"\t"+fluoIntensity/background+"\n");
         
+            // Bacteria shape descriptors
             ImageHandler imh = ImageHandler.wrap(phaseImg).createSameDimensions();
+            // Draw each object independently (and not all the population of objects once) to avoid binary thresholding of cell aggregates to results in merging several cells and biasing the shape results
             bact.drawObject(imh);
             ResultsTable resultsTable = new ResultsTable();
             ParticleAnalyzer particleAnalyzer = new ParticleAnalyzer(ParticleAnalyzer.CLEAR_WORKSHEET, ParticleAnalyzer.SHAPE_DESCRIPTORS+ParticleAnalyzer.LIMIT
                     +ParticleAnalyzer.AREA+ParticleAnalyzer.FERET, resultsTable, 0, Double.MAX_VALUE);
             IJ.setThreshold(imh.getImagePlus(), 1, Double.MAX_VALUE);
             particleAnalyzer.analyze(imh.getImagePlus());
-
             double area = resultsTable.getValue("Area", 0);
             double feret = resultsTable.getValue("Feret", 0);
             double minFeret = resultsTable.getValue("MinFeret", 0);
@@ -356,9 +345,7 @@ public class Tools {
             double round = resultsTable.getValue("Round", 0);
              shapeFile.write(imgName+"\t"+frameNumber+"\t"+bactLabel+"\t"+area+"\t"+feret+"\t"+minFeret+
                      "\t"+cir+"\t"+ar+"\t"+round+"\n");
-        
         }
-        
         fluoFile.flush();
         shapeFile.flush();
     }
@@ -368,12 +355,11 @@ public class Tools {
         ImageHandler imhBact = ImageHandler.wrap(imgBact).createSameDimensions();
         bactPop.drawInImage(imhBact);
         IJ.run(imhBact.getImagePlus(), "glasbey on dark", "");
-        ImagePlus[] imgColors1 = {imhBact.getImagePlus(), imgBact};
-        ImagePlus imgOut1 = new RGBStackMerge().mergeHyperstacks(imgColors1, false);
-        imgOut1.setCalibration(cal);
-        FileSaver ImgObjectsFile1 = new FileSaver(imgOut1);
-        ImgObjectsFile1.saveAsTiff(imgName + "_frame" + frameNumber + "_bacteria.tif");      
-        flush_close(imgOut1);
+        ImagePlus[] imgColors = {imhBact.getImagePlus(), imgBact};
+        ImagePlus imgOut = new RGBStackMerge().mergeHyperstacks(imgColors, false);
+        imgOut.setCalibration(cal);
+        FileSaver ImgObjectsFile = new FileSaver(imgOut);
+        ImgObjectsFile.saveAsTiff(imgName + "_frame" + frameNumber + "_bacteria.tif");      
+        flush_close(imgOut);
     }
-
 }

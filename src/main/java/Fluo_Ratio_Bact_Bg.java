@@ -38,12 +38,13 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
         try {
             if (!tools.checkInstalledModules()) {
                 return;
-            } 
+            }
             
             imageDir = IJ.getDirectory("Choose directory containing image files");
             if (imageDir == null) {
+                IJ.showMessage("Error", "No files directory");
                 return;
-            }  
+            }
             
             // Find images with extension
             String file_ext = tools.findImageType(new File(imageDir));
@@ -53,7 +54,7 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
                 return;
             }
             
-            // Create output folder
+            // Create results output folder
             outDirResults = imageDir + File.separator + "Results" + File.separator;
             File outDir = new File(outDirResults);
             if (!Files.exists(Paths.get(outDirResults))) {
@@ -101,14 +102,13 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
             for (String f : imageFiles) {
                 reader.setId(f);
                 String rootName = FilenameUtils.getBaseName(f);
-                tools.print("-- ANALYZING IMAGE " + rootName + " --");
+                System.out.println("-- ANALYZING IMAGE " + rootName + " --");
                 
                 ImporterOptions options = new ImporterOptions();
                 options.setId(f);
                 options.setQuiet(true);
                 options.setColorMode(ImporterOptions.COLOR_MODE_GRAYSCALE);
                 options.setSplitChannels(true);
-                
                 
                 // Open phase contrast channel
                 int indexCh = ArrayUtils.indexOf(channels, chs[0]);
@@ -123,7 +123,7 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
                     // Open frame t for channel 0
                     ImagePlus tPhase = new Duplicator().run​(imgPhase, 1, 1, 1, 1, t, t);
                     // Detect bacteria with Omnipose
-                    tools.print("- Detecting bacteria on phase contrast channel -");
+                    System.out.println("- Detecting bacteria on phase contrast channel -");
                     Objects3DIntPopulation tbactPop = tools.omniposeDetection(tPhase);
                     System.out.println(tbactPop.getNbObjects() + " bacteria found on frame " + t);
                     
@@ -132,7 +132,7 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
                     double tBackground = tools.findRoiBackgroundAuto(tFluo, 100, "median"); // rolling ball radius of 100 pixels
                         
                     // Do measurements and save results
-                    tools.print("- Saving results -");
+                    System.out.println("- Saving results -");
                     tools.saveResults(tbactPop, tPhase, tFluo, tBackground, rootName, fluoResults, shapeResults, t);
                 
                     // Save images
@@ -144,7 +144,7 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
                 tools.flush_close(imgFluo); 
             }
 
-            tools.print("--Done !--");
+            System.out.println("--Done !--");
             
         }   catch (IOException | FormatException | DependencyException | ServiceException ex) {
             Logger.getLogger(Fluo_Ratio_Bact_Bg.class.getName()).log(Level.SEVERE, null, ex);

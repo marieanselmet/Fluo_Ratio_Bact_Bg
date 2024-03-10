@@ -1,19 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Fluo_Ratio_Bact_Bg;
-
-/**
- *
- * @author manselme
- */
 import ij.gui.Roi;
 
 
-/**
- * @author orion-cirb
- */
 public class RoiBg {
     private Roi roi;
     private double bgInt;
