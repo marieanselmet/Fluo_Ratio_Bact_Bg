@@ -78,8 +78,7 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
             shapeResults.flush();
             
             // Create OME-XML metadata store of the latest schema version
-            ServiceFactory factory;
-            factory = new ServiceFactory();
+            ServiceFactory factory = new ServiceFactory();
             OMEXMLService service = factory.getInstance(OMEXMLService.class);
             IMetadata meta = service.createOMEXMLMetadata();
             ImageProcessorReader reader = new ImageProcessorReader();
@@ -97,7 +96,7 @@ public class Fluo_Ratio_Bact_Bg implements PlugIn {
             if (chs == null) {
                 IJ.showMessage("Error", "Plugin canceled");
                 return;
-            } 
+            }
 
             for (String f : imageFiles) {
                 reader.setId(f);

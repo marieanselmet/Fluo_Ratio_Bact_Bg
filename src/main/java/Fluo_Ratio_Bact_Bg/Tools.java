@@ -81,7 +81,10 @@ public class Tools {
         for (String name : files) {
             String fileExt = FilenameUtils.getExtension(name);
             switch (fileExt) {
-               case "nd" :
+                case "nd" :
+                   ext = fileExt;
+                   break;
+                case "nd2" :
                    ext = fileExt;
                    break;
                 case "czi" :
@@ -131,7 +134,7 @@ public class Tools {
     
     public void findImageCalib(IMetadata meta) {
         cal.pixelWidth = meta.getPixelsPhysicalSizeX(0).value().doubleValue();
-        cal.pixelHeight = cal.pixelWidth;
+        cal.pixelHeight = cal.pixelWidth; // Assuming isotropy (this is the case in all our images)
         cal.setUnit("microns");
         System.out.println("XY calibration = " + cal.pixelWidth);
     }
@@ -143,7 +146,7 @@ public class Tools {
         String imageExt =  FilenameUtils.getExtension(imageName);
         switch (imageExt) {
             case "nd" :
-                for (int n = 0; n < chs; n++) 
+                for (int n = 0; n < chs; n++)
                 {
                     if (meta.getChannelID(0, n) == null)
                         channels[n] = Integer.toString(n);
@@ -204,7 +207,7 @@ public class Tools {
         int index = 0;
         for (String ch : channelsName) {
             gd.addChoice(ch, channels, channels[index]);
-            index++;    
+            index++;
         }
         
         gd.addMessage("Bacteria detection", Font.getFont("Monospace"), Color.blue);
@@ -226,7 +229,7 @@ public class Tools {
             ch[i] = gd.getNextChoice();
         if(gd.wasCanceled())
            ch = null;
-                
+
         omniposeEnvDirPath = gd.getNextString();
         omniposeModelsPath = gd.getNextString();
         minBactSurface = (float) gd.getNextNumber();
