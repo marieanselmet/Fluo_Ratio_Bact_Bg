@@ -18,7 +18,7 @@ public class CellposeTaskSettings {
     String envType = "conda";
     String version = "2.0";
     boolean use3D = false;
-    boolean useGpu = false;
+    boolean useGpu = true; //false
     boolean useFastMode = false;
     boolean useResample = false;
     boolean omni = false;
