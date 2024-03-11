@@ -5,5 +5,5 @@ Returns some additional shape descriptors over time
 ### Dependencies
 
 * **3DImageSuite** Fiji plugin
-* **Omnipose** conda environment + *bact_fluor_omnitorch_0* model
+* **Omnipose** conda environment + *bact_phase_omnitorch_0* model
 
